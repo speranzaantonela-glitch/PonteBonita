@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ponte Bonita - Catálogo de Productos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { 
+            --rosa: #d8b4a6; 
+            --crema-rosa: #fff5f2; 
+            --texto: #4a4543; 
+            --blanco-tarjeta: #ffffff;
+            --fondo-modal: rgba(255,255,255,0.98);
+            --transition-chill: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --crema-rosa: #121212;
+            --texto: #f5f5f5;
+            --blanco-tarjeta: #1e1e1e;
+            --fondo-modal: rgba(10,10,10,0.98);
+        }
+
+        * { box-sizing: border-box; outline: none; transition: var(--transition-chill); }
+        body { 
+            background-color: var(--crema-rosa); 
+            font-family: 'Montserrat', sans-serif; 
+            margin: 0; color: var(--texto); 
+            overflow-x: hidden;
+        }
+
+        /* FONDO DE SÍMBOLOS EN GRILLA FIJA */
+        #bg-symbols { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            pointer-events: none; z-index: -1; 
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+        }
+        .symbol-cell { display: flex; align-items: center; justify-content: center; }
+        .symbol { font-size: 80px; opacity: 0.06; font-weight: bold; will-change: transform; }
+        .caer { transform: translateY(50px); opacity: 0; }
+        .subir { transform: translateY(-50px); opacity: 0; }
+
+        .theme-toggle {
+            position: fixed; bottom: 30px; right: 30px; z-index: 4000;
+            background: var(--rosa); color: white; border: none;
+            width: 60px; height: 60px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        header { text-align: center; padding: 60px 0 20px; }
+        .brand-name { font-family: 'Great Vibes', cursive; font-size: 4.5rem; color: var(--rosa); margin: 0; }
+
+        .social-icons { display: flex; justify-content: center; gap: 30px; margin: 20px 0; }
+        .social-icons a { color: var(--rosa); font-size: 1.8rem; text-decoration: none; opacity: 0.7; }
+        .social-icons a:hover { opacity: 1; transform: scale(1.1); }
+
+        .search-container { text-align: center; margin-bottom: 50px; }
+        #searchBar { 
+            width: 80%; max-width: 350px; padding: 15px; border: none; 
+            border-bottom: 2px solid var(--rosa); background: transparent; 
+            text-align: center; text-transform: uppercase; color: var(--texto);
+            letter-spacing: 3px; font-weight: 600;
+        }
+
+        .contenedor { max-width: 1200px; margin: auto; padding: 0 20px 50px; }
+        .grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 30px; }
+        
+        .tarjeta { cursor: pointer; text-align: center; background: var(--blanco-tarjeta); border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.03); }
+        .tarjeta:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+        
+        .foto-contenedor { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #fff; position: relative; display: flex; }
+        .carru-track { display: flex; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .carru-track img { min-width: 100%; width: 100%; height: 100%; object-fit: cover; flex-shrink: 0; }
+        
+        .info { padding: 20px; }
+        .info h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 8px; font-weight: 500; }
+        .precio { color: var(--rosa); font-weight: 700; font-size: 1.2rem; }
+
+        footer {
+            max-width: 900px; margin: 60px auto; padding: 30px;
+            text-align: center; border-top: 1px solid rgba(216, 180, 166, 0.3);
+            font-size: 0.9rem; color: #888; letter-spacing: 1px;
+        }
+        .footer-wspp { color: var(--rosa); font-weight: 600; text-decoration: none; display: block; margin-top: 10px; font-size: 1rem; }
+        .dev-tag { color: var(--rosa); font-weight: 600; text-transform: uppercase; font-size: 0.7rem; margin-top: 15px; display: block; }
+
+        /* MODAL Y ZOOM */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--fondo-modal); z-index: 5000; justify-content: center; align-items: center; opacity: 0; }
+        .modal.open { display: flex; opacity: 1; }
+        .modal-contenido { display: flex; width: 95%; max-width: 1100px; height: 85vh; background: var(--blanco-tarjeta); position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.1); }
+
+        .img-box { flex: 1.3; position: relative; display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden; cursor: crosshair; }
+        #detImg { max-width: 90%; max-height: 90%; object-fit: contain; pointer-events: none; transition: opacity 0.3s ease; }
+
+        #lupa {
+            position: absolute; border: 2px solid var(--rosa); border-radius: 50%;
+            width: 220px; height: 220px; pointer-events: none; display: none;
+            background-repeat: no-repeat; box-shadow: 0 8px 30px rgba(0,0,0,0.2); z-index: 5100;
+            background-color: white;
+        }
+
+        .detalles-box { flex: 1; padding: 50px; display: flex; flex-direction: column; justify-content: center; }
+        .precio-modal { font-size: 3.5rem; color: var(--rosa); margin-bottom: 30px; font-weight: 700; }
+        
+        .btn-wspp { 
+            padding: 22px; background: var(--rosa); color: white; text-decoration: none; 
+            font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 2px; 
+            border-radius: 50px; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-wspp:hover { filter: brightness(1.05); transform: scale(1.02); }
+
+        .btn-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.8); color: var(--rosa); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 5200; font-size: 1.5rem; }
+        .btn-cerrar { position: absolute; top: 25px; right: 25px; background: none; border: none; font-size: 2.5rem; color: #bbb; cursor: pointer; z-index: 5300; }
+
+        @media (max-width: 850px) { 
+            .brand-name { font-size: 3rem; }
+            .modal-contenido { flex-direction: column; height: 95vh; } 
+            #lupa { display: none !important; }
+            .img-box { cursor: default; }
+            .detalles-box { padding: 30px; }
+            .precio-modal { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div id="bg-symbols"></div>
+
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <header>
+        <h1 class="brand-name">Ponte Bonita</h1>
+        <div class="social-icons">
+            <a href="https://www.instagram.com/pontebonita_santafe/" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://wa.me/5493425578649" target="_blank"><i class="fab fa-whatsapp"></i></a>
+        </div>
+        <div class="search-container">
+            <input type="text" id="searchBar" placeholder="BUSCAR PRODUCTO..." onkeyup="render()">
+        </div>
+    </header>
+
+    <div class="contenedor">
+        <div class="grilla" id="miGrilla"></div>
+        
+        <footer>
+            <p><strong>CATÁLOGO DE PRODUCTOS</strong></p>
+            <p>Seleccioná tus favoritos y consultanos disponibilidad</p>
+            <a href="https://wa.me/5493425578649" class="footer-wspp" target="_blank">
+                <i class="fab fa-whatsapp"></i> Hablanos por WhatsApp
+            </a>
+            <span class="dev-tag">© 2026 Developed by Manuel</span>
+        </footer>
+    </div>
+
+    <div id="miModal" class="modal">
+        <div class="modal-contenido">
+            <button class="btn-cerrar" onclick="cerrar()">&#10005;</button>
+            <div class="img-box" id="imgBox">
+                <div id="lupa"></div>
+                <button class="btn-nav" style="left:20px" id="btnPrevModal">&#10094;</button>
+                <img id="detImg" src="">
+                <button class="btn-nav" style="right:20px" id="btnNextModal">&#10095;</button>
+            </div>
+            <div class="detalles-box">
+                <h2 id="detTit" style="font-family: 'Playfair Display'; margin: 0; font-size: 2.2rem; font-weight: 500;"></h2>
+                <h3 id="detTono" style="font-family: 'Montserrat'; font-weight: 300; color: #888; margin: 10px 0;"></h3>
+                <span id="detPre" class="precio-modal"></span>
+                <a id="detLnk" class="btn-wspp" target="_blank">
+                    <i class="fab fa-whatsapp"></i> CONSULTAR POR WHATSAPP
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const db = [
+            { t: "Colonia AMBRE", p: "3.500", items: [{n:"Colonia AMBRE", i:"https://i.ibb.co/rGNNwT1L/Colonia-AMBRE.jpg"}]},
+            { t: "Base + Corrector", p: "5.000", items: [{n:"Duo Piel Perfecta", i:"https://i.ibb.co/TDQBhXR1/Base-Corrector.jpg"}]},
+            { t: "Crema para Manos", p: "2.800", items: [{n:"Crema Manos", i:"https://i.ibb.co/hxR1d5KW/Crema-Para-Manos.jpg"}]},
+            { t: "Blusher en Barra", p: "3.900", items: [{n:"Blusher Barra", i:"https://i.ibb.co/0jk59csJ/Blusher-En-Barra.jpg"}]},
+            { t: "Cera para Cejas", p: "4.000", items: [{n:"Cera Cejas", i:"https://i.ibb.co/FkvN2vwj/Cera-Para-Cejas.jpg"}]},
+            { t: "Blushers en Polvo", p: "4.500", items: [
+                {n:"Tono 1", i:"https://i.ibb.co/hRCB6tZJ/Blusher-En-Polvo1.jpg"},
+                {n:"Tono 2", i:"https://i.ibb.co/xKTp844B/Blusher-En-Polvo2.jpg"},
+                {n:"Tono 3", i:"https://i.ibb.co/213LKTSY/Blusher-En-Polvo3.jpg"}
+            ]},
+            { t: "Labial Oso", p: "4.000", items: [
+                {n:"Labial Oso Cerrado", i:"https://i.ibb.co/C35jwcrH/Labial-Mate-Oso-Close.jpg"},
+                {n:"Labial Oso Abierto", i:"https://i.ibb.co/Tq0QTP2n/Labial-Mate-Oso-Open.jpg"}
+            ]},
+            { t: "Bálsamos Frutales", p: "2.000", items: [
+                {n:"Bálsamo Limón", i:"https://i.ibb.co/Nd9K7Ls5/Balsamo-Limon.jpg"},
+                {n:"Bálsamo Manzana", i:"https://i.ibb.co/Q309SpKT/Balsamo-Manzana.jpg"}
+            ]},
+            { t: "Delineadores de Colores", p: "2.500", items: [
+                {n:"Delineador Azul", i:"https://i.ibb.co/XfzCHwzt/Delineador-Liquido-Azul.jpg"},
+                {n:"Delineador Rojo", i:"https://i.ibb.co/QS000Qk/Delineador-Liquido-Rojo.jpg"}
+            ]},
+            { t: "Base Líquida", p: "4.000", items: [{n:"Base Líquida", i:"https://i.ibb.co/7NLq2BZv/Base-Liquida.jpg"}]},
+            { t: "Delineador Negro Liquido", p: "3.000", items: [{n:"Delineador Liquido", i:"https://i.ibb.co/LDGS6BwN/Delineador-Liquido-Negro.jpg"}]},
+            { t: "Arqueadores", p: "4.000", items: [{n:"Arqueador", i:"https://i.ibb.co/C51QtYML/Arqueadores.jpg"}]},
+            { t: "Ampollas Capilares", p: "1.500", items: [{n:"Ampolla Vitamina", i:"https://i.ibb.co/mFbZRs7b/Ampollas.jpg"}]},
+            { t: "Delineadores de Labios", p: "2.000", items: [{n:"Set Labios", i:"https://i.ibb.co/cSMMwcnz/Delineadores-De-Labios.jpg"}]}
+        ];
+
+        let intervals = {}, pAct = null, iAct = 0;
+        const clean = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        function render() {
+            const g = document.getElementById('miGrilla');
+            const query = clean(document.getElementById('searchBar').value);
+            g.innerHTML = '';
+            db.forEach((p, i) => {
+                if (clean(p.t).includes(query)) {
+                    let imgs = p.items.map(it => `<img src="${it.i}">`).join('');
+                    g.innerHTML += `
+                    <div class="tarjeta" onclick="abrir(${i})" onmouseenter="startC(${i})" onmouseleave="stopC(${i})">
+                        <div class="foto-contenedor"><div class="carru-track" id="t-${i}">${imgs}</div></div>
+                        <div class="info"><h3>${p.t}</h3><div class="precio">$${p.p}</div></div>
+                    </div>`;
+                }
+            });
+        }
+
+        function startC(id) {
+            const track = document.getElementById(`t-${id}`);
+            const count = track.children.length;
+            if (count <= 1) return;
+            let idx = 0;
+            intervals[id] = setInterval(() => {
+                idx = (idx + 1) % count;
+                track.style.transform = `translateX(-${idx * 100}%)`;
+            }, 1400);
+        }
+
+        function stopC(id) {
+            clearInterval(intervals[id]);
+            const track = document.getElementById(`t-${id}`);
+            if(track) track.style.transform = 'translateX(0)';
+        }
+
+        function abrir(idx) {
+            pAct = db[idx]; iAct = 0;
+            actualizarModal();
+            const m = document.getElementById('miModal');
+            m.style.display = 'flex';
+            setTimeout(() => m.classList.add('open'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function actualizarModal() {
+            const it = pAct.items[iAct];
+            const img = document.getElementById('detImg');
+            img.style.opacity = 0;
+            setTimeout(() => {
+                img.src = it.i;
+                img.style.opacity = 1;
+                document.getElementById('lupa').style.backgroundImage = `url('${it.i}')`;
+            }, 150);
+            document.getElementById('detTit').innerText = pAct.t;
+            const tonoText = it.n.toLowerCase().includes("tono") ? it.n : "";
+            document.getElementById('detTono').innerText = tonoText;
+            document.getElementById('detPre').innerText = "$" + pAct.p;
+            document.getElementById('detLnk').href = `https://wa.me/5493425578649?text=Hola! Me interesa este producto: ${pAct.t} ${tonoText}`;
+        }
+
+        const imgBox = document.getElementById('imgBox');
+        const lupa = document.getElementById('lupa');
+        
+        imgBox.addEventListener('mousemove', (e) => {
+            if(window.innerWidth <= 850) return;
+            lupa.style.display = 'block';
+            const rect = imgBox.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            lupa.style.left = `${x - 110}px`;
+            lupa.style.top = `${y - 110}px`;
+            
+            const zoom = 2.2;
+            const px = (x / rect.width) * 100;
+            const py = (y / rect.height) * 100;
+            
+            lupa.style.backgroundPosition = `${px}% ${py}%`;
+            lupa.style.backgroundSize = `${rect.width * zoom}px ${rect.height * zoom}px`;
+        });
+
+        imgBox.addEventListener('mouseleave', () => lupa.style.display = 'none');
+
+        document.getElementById('btnPrevModal').onclick = (e) => { e.stopPropagation(); iAct = (iAct - 1 + pAct.items.length) % pAct.items.length; actualizarModal(); };
+        document.getElementById('btnNextModal').onclick = (e) => { e.stopPropagation(); iAct = (iAct + 1) % pAct.items.length; actualizarModal(); };
+        
+        function cerrar() { 
+            const m = document.getElementById('miModal');
+            m.classList.remove('open');
+            setTimeout(() => m.style.display = 'none', 600);
+            document.body.style.overflow = 'auto'; 
+        }
+
+        const simbolosDia = ['♢', '○', '✧', '♡', '❀'], simbolosNoche = ['✶', '☽', '✦', '∆', '☄'];
+        function initSymbols() {
+            const container = document.getElementById('bg-symbols');
+            container.innerHTML = '';
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const set = isDark ? simbolosNoche : simbolosDia;
+            
+            for(let i=0; i<20; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'symbol-cell';
+                const s = document.createElement('div');
+                s.className = 'symbol';
+                s.innerText = set[i % set.length];
+                cell.appendChild(s);
+                container.appendChild(cell);
+            }
+        }
+
+        function toggleTheme() {
+            const b = document.body;
+            const isDark = b.getAttribute('data-theme') === 'dark';
+            document.querySelectorAll('.symbol').forEach(s => s.classList.add(isDark ? 'subir' : 'caer'));
+            setTimeout(() => {
+                b.setAttribute('data-theme', isDark ? 'light' : 'dark');
+                document.getElementById('themeBtn').innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+                initSymbols();
+            }, 600);
+        }
+        
+        window.onload = () => { render(); initSymbols(); };
+    </script>
+</body>
+</html>
